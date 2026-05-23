@@ -42,6 +42,9 @@ func main() {
 	// 初始化 Gin
 	r := gin.Default()
 
+	// 设置文件上传内存限制为 8MB
+	r.MaxMultipartMemory = 8 << 20
+
 	// 注册 CORS 中间件
 	r.Use(middleware.CorsMiddleware())
 

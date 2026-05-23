@@ -1,8 +1,6 @@
 package router
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 
 	"ballmate/handler"
@@ -24,17 +22,12 @@ func SetupRouter(r *gin.Engine) {
 	user := api.Group("/user")
 	user.Use(middleware.AuthMiddleware())
 	{
-		user.GET("/profile", placeholderHandler)
-		user.PUT("/profile", placeholderHandler)
-		user.PUT("/password", placeholderHandler)
-		user.POST("/avatar", placeholderHandler)
+		user.GET("/profile", handler.GetProfile)
+		user.PUT("/profile", handler.UpdateProfile)
+		user.PUT("/password", handler.UpdatePassword)
+		user.POST("/avatar", handler.UploadAvatar)
 	}
 
 	// 静态文件服务（头像访问）
 	r.Static("/uploads", "./uploads")
-}
-
-// placeholderHandler 占位 handler，后续 plan 实现
-func placeholderHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": nil})
 }
