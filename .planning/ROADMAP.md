@@ -19,6 +19,7 @@
 ### Phase 1: 用户系统
 **Goal:** 用户可以注册、登录、管理个人信息，前后端基础架构搭建完成
 **Mode:** mvp
+**Plans:** 2 plans
 **Success Criteria:**
 1. 用户可以注册账号并登录，刷新后保持登录状态
 2. 用户可以查看和编辑个人资料（头像、昵称、常住地、球类兴趣）
@@ -28,6 +29,10 @@
 **Requirements:** AUTH-01, AUTH-02, AUTH-03, AUTH-04, PROF-01, PROF-02, PROF-03, PROF-04
 
 **UI hint:** yes
+
+Plans:
+- [ ] 01-01-PLAN.md — 基础架构 + 注册/登录垂直切片（前后端骨架、注册、登录、token 持久化）
+- [ ] 01-02-PLAN.md — 个人中心垂直切片（查看/编辑资料、头像上传、修改密码、退出登录）
 
 ---
 
@@ -76,3 +81,4 @@
 ---
 
 *Created: 2026-05-23*
+*Updated: 2026-05-23 — Phase 1 plans created*
