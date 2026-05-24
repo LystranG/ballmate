@@ -32,11 +32,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### 附近约球
 
-- [ ] **NEARBY-01**: 基于浏览器定位获取用户当前位置
-- [ ] **NEARBY-02**: 列出附近其他人发出的球类邀约
-- [ ] **NEARBY-03**: 列表默认按地点从近到远排列
-- [ ] **NEARBY-04**: 可按时间排序
-- [ ] **NEARBY-05**: 可按球类筛选
+- [x] **NEARBY-01**: 基于浏览器定位获取用户当前位置
+- [x] **NEARBY-02**: 列出附近其他人发出的球类邀约
+- [x] **NEARBY-03**: 列表默认按地点从近到远排列
+- [x] **NEARBY-04**: 可按时间排序
+- [x] **NEARBY-05**: 可按球类筛选
 - [ ] **NEARBY-06**: 用户可以加入一个邀约
 - [ ] **NEARBY-07**: 用户可以退出已加入的邀约
 
@@ -88,11 +88,11 @@ Requirements for initial release. Each maps to roadmap phases.
 | INVITE-04 | Phase 2 | Pending |
 | INVITE-05 | Phase 2 | Pending |
 | INVITE-06 | Phase 2 | Pending |
-| NEARBY-01 | Phase 3 | Pending |
-| NEARBY-02 | Phase 3 | Pending |
-| NEARBY-03 | Phase 3 | Pending |
-| NEARBY-04 | Phase 3 | Pending |
-| NEARBY-05 | Phase 3 | Pending |
+| NEARBY-01 | Phase 3 | Complete |
+| NEARBY-02 | Phase 3 | Complete |
+| NEARBY-03 | Phase 3 | Complete |
+| NEARBY-04 | Phase 3 | Complete |
+| NEARBY-05 | Phase 3 | Complete |
 | NEARBY-06 | Phase 3 | Pending |
 | NEARBY-07 | Phase 3 | Pending |
 | PART-01 | Phase 2 | Pending |
