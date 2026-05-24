@@ -28,6 +28,17 @@ func SetupRouter(r *gin.Engine) {
 		user.POST("/avatar", handler.UploadAvatar)
 	}
 
+	// 邀约路由
+	invitation := api.Group("/invitations")
+	invitation.Use(middleware.AuthMiddleware())
+	{
+		invitation.POST("", handler.CreateInvitation)
+		invitation.GET("/:id", handler.GetInvitation)
+		invitation.PUT("/:id/terminate", handler.TerminateInvitation)
+		invitation.DELETE("/:id", handler.DeleteInvitation)
+		invitation.GET("/:id/participants", handler.GetParticipants)
+	}
+
 	// 静态文件服务（头像访问）
 	r.Static("/uploads", "./uploads")
 }

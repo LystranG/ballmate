@@ -34,7 +34,7 @@ func main() {
 	sqlDB.SetMaxOpenConns(1)
 
 	// 自动迁移
-	db.AutoMigrate(&model.User{})
+	db.AutoMigrate(&model.User{}, &model.Invitation{}, &model.Participation{})
 
 	// 注入数据库实例到 service 层
 	service.DB = db
