@@ -33,6 +33,8 @@ func SetupRouter(r *gin.Engine) {
 	invitation.Use(middleware.AuthMiddleware())
 	{
 		invitation.POST("", handler.CreateInvitation)
+		// /nearby 必须在 /:id 之前注册，否则 Gin 会把 "nearby" 当作 id 参数匹配
+		invitation.GET("/nearby", handler.ListNearby)
 		invitation.GET("/:id", handler.GetInvitation)
 		invitation.PUT("/:id/terminate", handler.TerminateInvitation)
 		invitation.DELETE("/:id", handler.DeleteInvitation)

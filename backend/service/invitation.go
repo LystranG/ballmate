@@ -2,10 +2,168 @@ package service
 
 import (
 	"errors"
+	"math"
+	"sort"
 	"time"
 
 	"ballmate/model"
 )
+
+const earthRadiusKm = 6371.0
+
+// haversineDistance 计算两点间球面距离（公里），作为 SQL 不可用时的回退
+func haversineDistance(lat1, lng1, lat2, lng2 float64) float64 {
+	dLat := (lat2 - lat1) * math.Pi / 180
+	dLng := (lng2 - lng1) * math.Pi / 180
+	lat1Rad := lat1 * math.Pi / 180
+	lat2Rad := lat2 * math.Pi / 180
+
+	a := math.Sin(dLat/2)*math.Sin(dLat/2) +
+		math.Cos(lat1Rad)*math.Cos(lat2Rad)*
+			math.Sin(dLng/2)*math.Sin(dLng/2)
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+	return earthRadiusKm * c
+}
+
+// NearbyInvitationResponse 附近邀约响应（含距离字段）
+type NearbyInvitationResponse struct {
+	InvitationResponse
+	Distance float64 `json:"distance"`
+}
+
+// ListNearbyInvitations 查询附近邀约（Haversine 距离计算 + 排序 + 筛选 + 分页）
+// 排除当前用户自己创建的邀约（per NEARBY-02）
+func ListNearbyInvitations(userID uint, lat, lng float64, sportType, sortBy string, page, pageSize int) ([]NearbyInvitationResponse, int64, error) {
+	// Haversine SQL 表达式（SQLite 不支持 RADIANS，手动 * pi/180）
+	// mattn/go-sqlite3 默认启用 SQLITE_ENABLE_MATH_FUNCTIONS，支持 sin/cos/asin/sqrt/pow
+	distanceExpr := `(6371 * 2 * asin(sqrt(
+		pow(sin((latitude - ?) * 3.141592653589793 / 180 / 2), 2) +
+		cos(? * 3.141592653589793 / 180) * cos(latitude * 3.141592653589793 / 180) *
+		pow(sin((longitude - ?) * 3.141592653589793 / 180 / 2), 2)
+	)))`
+
+	query := DB.Table("invitations").
+		Select("invitations.*, "+distanceExpr+" as distance", lat, lat, lng).
+		Where("invitations.deleted_at IS NULL").
+		Where("invitations.creator_id != ?", userID)
+
+	// 球类筛选
+	if sportType != "" {
+		query = query.Where("invitations.sport_type = ?", sportType)
+	}
+
+	// 总数统计（不含分页）
+	countQuery := DB.Table("invitations").
+		Where("deleted_at IS NULL").
+		Where("creator_id != ?", userID)
+	if sportType != "" {
+		countQuery = countQuery.Where("sport_type = ?", sportType)
+	}
+	var total int64
+	countQuery.Count(&total)
+
+	// 排序
+	if sortBy == "time" {
+		query = query.Order("activity_time ASC")
+	} else {
+		query = query.Order("distance ASC")
+	}
+
+	// 分页
+	offset := (page - 1) * pageSize
+	query = query.Offset(offset).Limit(pageSize)
+
+	var results []struct {
+		model.Invitation
+		Distance float64
+	}
+	if err := query.Scan(&results).Error; err != nil {
+		// SQL 数学函数不可用时回退到 Go 层计算
+		return listNearbyFallback(userID, lat, lng, sportType, sortBy, page, pageSize)
+	}
+
+	// 检查是否因数学函数不可用导致 distance 全为 0（非正常情况）
+	// 若所有 distance 为 0 且有多条记录，说明 SQL 计算失败，回退到 Go 层
+	if len(results) > 1 {
+		allZero := true
+		for _, r := range results {
+			if r.Distance != 0 {
+				allZero = false
+				break
+			}
+		}
+		if allZero {
+			return listNearbyFallback(userID, lat, lng, sportType, sortBy, page, pageSize)
+		}
+	}
+
+	responses := make([]NearbyInvitationResponse, len(results))
+	for i, r := range results {
+		base := buildResponse(r.Invitation)
+		responses[i] = NearbyInvitationResponse{
+			InvitationResponse: *base,
+			Distance:           r.Distance,
+		}
+	}
+	return responses, total, nil
+}
+
+// listNearbyFallback 当 SQLite 数学函数不可用时，Go 层计算距离并排序分页
+func listNearbyFallback(userID uint, lat, lng float64, sportType, sortBy string, page, pageSize int) ([]NearbyInvitationResponse, int64, error) {
+	query := DB.Table("invitations").
+		Where("deleted_at IS NULL").
+		Where("creator_id != ?", userID)
+	if sportType != "" {
+		query = query.Where("sport_type = ?", sportType)
+	}
+
+	var invitations []model.Invitation
+	query.Find(&invitations)
+
+	// Go 层计算距离
+	type withDist struct {
+		inv      model.Invitation
+		distance float64
+	}
+	items := make([]withDist, len(invitations))
+	for i, inv := range invitations {
+		items[i] = withDist{inv: inv, distance: haversineDistance(lat, lng, inv.Latitude, inv.Longitude)}
+	}
+
+	// 排序
+	if sortBy == "time" {
+		sort.Slice(items, func(i, j int) bool {
+			return items[i].inv.ActivityTime.Before(items[j].inv.ActivityTime)
+		})
+	} else {
+		sort.Slice(items, func(i, j int) bool {
+			return items[i].distance < items[j].distance
+		})
+	}
+
+	total := int64(len(items))
+
+	// 分页
+	offset := (page - 1) * pageSize
+	if offset >= len(items) {
+		return []NearbyInvitationResponse{}, total, nil
+	}
+	end := offset + pageSize
+	if end > len(items) {
+		end = len(items)
+	}
+	items = items[offset:end]
+
+	responses := make([]NearbyInvitationResponse, len(items))
+	for i, item := range items {
+		base := buildResponse(item.inv)
+		responses[i] = NearbyInvitationResponse{
+			InvitationResponse: *base,
+			Distance:           item.distance,
+		}
+	}
+	return responses, total, nil
+}
 
 // InvitationResponse 邀约响应结构（含计算后状态和参与人数）
 type InvitationResponse struct {

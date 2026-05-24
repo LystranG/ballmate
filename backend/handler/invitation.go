@@ -44,6 +44,40 @@ func CreateInvitation(c *gin.Context) {
 	Success(c, resp)
 }
 
+// listNearbyRequest 附近邀约查询参数
+type listNearbyRequest struct {
+	Latitude  float64 `form:"lat" binding:"required"`
+	Longitude float64 `form:"lng" binding:"required"`
+	Page      int     `form:"page,default=1"`
+	PageSize  int     `form:"page_size,default=10"`
+	SortBy    string  `form:"sort_by,default=distance"` // distance | time
+	SportType string  `form:"sport_type"`
+}
+
+// ListNearby 获取附近邀约列表（按距离或时间排序，支持球类筛选）
+func ListNearby(c *gin.Context) {
+	userID := c.GetUint("userID")
+	var req listNearbyRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		Error(c, http.StatusBadRequest, "请求参数错误")
+		return
+	}
+	// PageSize 上限 20，防止单次请求返回过多数据（T-03-02）
+	if req.PageSize > 20 {
+		req.PageSize = 20
+	}
+
+	list, total, err := service.ListNearbyInvitations(
+		userID, req.Latitude, req.Longitude,
+		req.SportType, req.SortBy, req.Page, req.PageSize,
+	)
+	if err != nil {
+		Error(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	Success(c, gin.H{"list": list, "total": total})
+}
+
 // GetInvitation 获取邀约详情
 func GetInvitation(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
