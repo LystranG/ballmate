@@ -39,6 +39,8 @@ func SetupRouter(r *gin.Engine) {
 		invitation.PUT("/:id/terminate", handler.TerminateInvitation)
 		invitation.DELETE("/:id", handler.DeleteInvitation)
 		invitation.GET("/:id/participants", handler.GetParticipants)
+		invitation.POST("/:id/join", handler.JoinInvitation)
+		invitation.DELETE("/:id/join", handler.LeaveInvitation)
 	}
 
 	// 静态文件服务（头像访问）

@@ -80,13 +80,14 @@ func ListNearby(c *gin.Context) {
 
 // GetInvitation 获取邀约详情
 func GetInvitation(c *gin.Context) {
+	userID := c.GetUint("userID")
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		Error(c, http.StatusBadRequest, "无效的邀约ID")
 		return
 	}
 
-	resp, err := service.GetInvitation(uint(id))
+	resp, err := service.GetInvitation(uint(id), userID)
 	if err != nil {
 		Error(c, http.StatusNotFound, err.Error())
 		return
@@ -141,4 +142,47 @@ func GetParticipants(c *gin.Context) {
 		return
 	}
 	Success(c, participants)
+}
+
+// JoinInvitation 加入邀约
+func JoinInvitation(c *gin.Context) {
+	userID := c.GetUint("userID")
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		Error(c, http.StatusBadRequest, "无效的邀约ID")
+		return
+	}
+
+	if err := service.JoinInvitation(uint(id), userID); err != nil {
+		msg := err.Error()
+		// 权限类错误返回 403，业务类错误返回 400
+		if msg == "您已加入该邀约" || msg == "邀约人数已满" || msg == "该邀约已无法加入" {
+			Error(c, http.StatusBadRequest, msg)
+		} else {
+			Error(c, http.StatusForbidden, msg)
+		}
+		return
+	}
+	Success(c, nil)
+}
+
+// LeaveInvitation 退出邀约
+func LeaveInvitation(c *gin.Context) {
+	userID := c.GetUint("userID")
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		Error(c, http.StatusBadRequest, "无效的邀约ID")
+		return
+	}
+
+	if err := service.LeaveInvitation(uint(id), userID); err != nil {
+		msg := err.Error()
+		if msg == "创建者不能退出自己的邀约" {
+			Error(c, http.StatusForbidden, msg)
+		} else {
+			Error(c, http.StatusBadRequest, msg)
+		}
+		return
+	}
+	Success(c, nil)
 }

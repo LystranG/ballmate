@@ -178,6 +178,7 @@ type InvitationResponse struct {
 	Status           string    `json:"status"`
 	ParticipantCount int       `json:"participant_count"`
 	CreatedAt        time.Time `json:"created_at"`
+	HasJoined        bool      `json:"has_joined"`
 }
 
 // ParticipantInfo 参与人信息（手机号已脱敏）
@@ -252,13 +253,76 @@ func CreateInvitation(creatorID uint, sportType, address string, activityTime ti
 	return buildResponse(inv), nil
 }
 
-// GetInvitation 获取邀约详情
-func GetInvitation(id uint) (*InvitationResponse, error) {
+// GetInvitation 获取邀约详情（含当前用户是否已加入）
+func GetInvitation(id, userID uint) (*InvitationResponse, error) {
 	var inv model.Invitation
 	if err := DB.First(&inv, id).Error; err != nil {
 		return nil, errors.New("邀约不存在")
 	}
-	return buildResponse(inv), nil
+	resp := buildResponse(inv)
+	// 查询当前用户是否已加入
+	var joinCount int64
+	DB.Model(&model.Participation{}).
+		Where("invitation_id = ? AND user_id = ? AND deleted_at IS NULL", id, userID).
+		Count(&joinCount)
+	resp.HasJoined = joinCount > 0
+	return resp, nil
+}
+
+// JoinInvitation 加入邀约
+// 校验：邀约存在、状态为 waiting、未满员、未重复加入
+// 加入后若满员则自动将状态流转为 gathered
+func JoinInvitation(invitationID, userID uint) error {
+	var inv model.Invitation
+	if err := DB.First(&inv, invitationID).Error; err != nil {
+		return errors.New("邀约不存在")
+	}
+	if computeStatus(inv) != "waiting" {
+		return errors.New("该邀约已无法加入")
+	}
+	// 校验未满员
+	var count int64
+	DB.Model(&model.Participation{}).Where("invitation_id = ? AND deleted_at IS NULL", invitationID).Count(&count)
+	if int(count) >= inv.MaxPeople {
+		return errors.New("邀约人数已满")
+	}
+	// 创建参与记录（联合唯一索引自动防重复）
+	if err := DB.Create(&model.Participation{InvitationID: invitationID, UserID: userID}).Error; err != nil {
+		return errors.New("您已加入该邀约")
+	}
+	// 加入后重新统计，满员则自动流转为 gathered
+	var newCount int64
+	DB.Model(&model.Participation{}).Where("invitation_id = ? AND deleted_at IS NULL", invitationID).Count(&newCount)
+	if int(newCount) >= inv.MaxPeople {
+		DB.Model(&inv).Update("status", "gathered")
+	}
+	return nil
+}
+
+// LeaveInvitation 退出邀约
+// 校验：邀约存在、非创建者、状态为 waiting、已加入
+// 退出后若邀约之前是 gathered 则恢复为 waiting
+func LeaveInvitation(invitationID, userID uint) error {
+	var inv model.Invitation
+	if err := DB.First(&inv, invitationID).Error; err != nil {
+		return errors.New("邀约不存在")
+	}
+	if inv.CreatorID == userID {
+		return errors.New("创建者不能退出自己的邀约")
+	}
+	if computeStatus(inv) != "waiting" {
+		return errors.New("该邀约状态不允许退出")
+	}
+	// 软删除参与记录
+	result := DB.Where("invitation_id = ? AND user_id = ?", invitationID, userID).Delete(&model.Participation{})
+	if result.RowsAffected == 0 {
+		return errors.New("您未加入该邀约")
+	}
+	// 若邀约之前是 gathered（满员），退出后人数不足，恢复为 waiting
+	if inv.Status == "gathered" {
+		DB.Model(&inv).Update("status", "waiting")
+	}
+	return nil
 }
 
 // TerminateInvitation 终止邀约（仅创建者、仅 waiting 状态）
