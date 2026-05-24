@@ -223,6 +223,48 @@ func buildResponse(inv model.Invitation) *InvitationResponse {
 	}
 }
 
+// MyInvitations 查询当前用户的邀约列表
+// listType == "created"：查询用户发起的邀约
+// listType == "joined"：查询用户参与但非自己创建的邀约
+func MyInvitations(userID uint, listType string, page, pageSize int) ([]InvitationResponse, int64, error) {
+	offset := (page - 1) * pageSize
+
+	var invitations []model.Invitation
+	var total int64
+
+	if listType == "joined" {
+		// 查询用户参与但非自己创建的邀约（排除自己创建的）
+		DB.Table("invitations").
+			Joins("JOIN participations ON participations.invitation_id = invitations.id").
+			Where("participations.user_id = ? AND participations.deleted_at IS NULL AND invitations.creator_id != ? AND invitations.deleted_at IS NULL", userID, userID).
+			Count(&total)
+
+		DB.Table("invitations").
+			Joins("JOIN participations ON participations.invitation_id = invitations.id").
+			Where("participations.user_id = ? AND participations.deleted_at IS NULL AND invitations.creator_id != ? AND invitations.deleted_at IS NULL", userID, userID).
+			Order("invitations.created_at DESC").
+			Offset(offset).Limit(pageSize).
+			Find(&invitations)
+	} else {
+		// 默认 created：查询用户发起的邀约
+		DB.Model(&model.Invitation{}).
+			Where("creator_id = ? AND deleted_at IS NULL", userID).
+			Count(&total)
+
+		DB.Model(&model.Invitation{}).
+			Where("creator_id = ? AND deleted_at IS NULL", userID).
+			Order("created_at DESC").
+			Offset(offset).Limit(pageSize).
+			Find(&invitations)
+	}
+
+	responses := make([]InvitationResponse, len(invitations))
+	for i, inv := range invitations {
+		responses[i] = *buildResponse(inv)
+	}
+	return responses, total, nil
+}
+
 // CreateInvitation 创建邀约，创建者自动加入参与人
 func CreateInvitation(creatorID uint, sportType, address string, activityTime time.Time, lat, lng float64, maxPeople int) (*InvitationResponse, error) {
 	inv := model.Invitation{

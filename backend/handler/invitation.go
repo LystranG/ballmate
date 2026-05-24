@@ -144,6 +144,34 @@ func GetParticipants(c *gin.Context) {
 	Success(c, participants)
 }
 
+// myInvitationsRequest 我的邀约查询参数
+type myInvitationsRequest struct {
+	Type     string `form:"type,default=created"` // created | joined
+	Page     int    `form:"page,default=1"`
+	PageSize int    `form:"page_size,default=10"`
+}
+
+// MyInvitations 获取当前用户的邀约列表（发起的或参与的）
+func MyInvitations(c *gin.Context) {
+	userID := c.GetUint("userID")
+	var req myInvitationsRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		Error(c, http.StatusBadRequest, "请求参数错误")
+		return
+	}
+	// PageSize 上限 20，防止单次请求返回过多数据
+	if req.PageSize > 20 {
+		req.PageSize = 20
+	}
+
+	list, total, err := service.MyInvitations(userID, req.Type, req.Page, req.PageSize)
+	if err != nil {
+		Error(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	Success(c, gin.H{"list": list, "total": total})
+}
+
 // JoinInvitation 加入邀约
 func JoinInvitation(c *gin.Context) {
 	userID := c.GetUint("userID")
