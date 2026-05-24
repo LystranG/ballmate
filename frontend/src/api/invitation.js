@@ -5,6 +5,11 @@ export function createInvitation(data) {
   return request.post('/invitations', data)
 }
 
+// 获取附近邀约列表（按距离/时间排序，支持球类筛选）
+export function getNearbyInvitations(params) {
+  return request.get('/invitations/nearby', { params })
+}
+
 // 获取邀约详情
 export function getInvitation(id) {
   return request.get(`/invitations/${id}`)
