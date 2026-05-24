@@ -79,5 +79,11 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 - mermaid用例图使用 graph LR 布局（中文兼容性好）
 - B4 展示完整 JoinInvitation 函数含事务逻辑
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260524-pci | 修复 INVITE-01 字段名不匹配 + userInfo 刷新持久化 | 2026-05-24 | fda28a4 | [260524-pci-invite-01-userinfo](./quick/260524-pci-invite-01-userinfo/) |
+
 ---
-*Last updated: 2026-05-24 after phase 4 plan 01 complete*
+*Last activity: 2026-05-24 - Completed quick task 260524-pci: 修复 INVITE-01 字段名不匹配 + userInfo 刷新持久化*
