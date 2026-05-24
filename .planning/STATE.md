@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-24T09:00:00.000Z"
+last_updated: "2026-05-24T08:38:17.354Z"
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 8
-  completed_plans: 6
-  percent: 62
+  completed_plans: 7
+  percent: 50
 ---
 
 # Project State: 掌上约球
@@ -25,7 +25,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-23)
 
 **Core value:** 让用户能快速找到附近想打球的人，凑齐人数开始运动
-**Current focus:** Phase 03 — nearby-and-my-invitations (Plan 01 complete)
+**Current focus:** Phase 03 — nearby-and-my-invitations (Plan 02 complete)
 
 ## Progress
 
@@ -33,7 +33,7 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 |-------|------|--------|-------|
 | 1 | 用户系统 | ● Complete | 2/2 |
 | 2 | 邀约核心 | ● Complete | 3/3 |
-| 3 | 附近约球与我的邀约 | ◐ In Progress | 1/3 |
+| 3 | 附近约球与我的邀约 | ◐ In Progress | 2/3 |
 | 4 | 报告撰写 | ○ Not Started | 0/0 |
 
 ## Decisions Log
@@ -51,6 +51,11 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 - PageSize 上限 20（T-03-02 DoS 防护）
 - v-if="hasLocation" 控制 Vant List 渲染时机，防止定位前发出无坐标请求
 
+- gathered 状态下已加入的人不能退出（满员意味着活动确认）
+- LeaveInvitation 校验 computeStatus 确保 expired 邀约也无法退出
+- 加入后满员自动流转 gathered，退出后若之前是 gathered 则恢复 waiting
+- 底部操作栏仅非创建者可见（创建者有独立的 action-section）
+
 ## Performance Metrics
 
 | Phase | Plan | Duration | Tasks | Files |
@@ -61,6 +66,7 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 | 02 | 02 | 2min | 4 | 6 |
 | 02 | 03 | 3min | 1 | 3 |
 | 03 | 01 | 12min | 2 | 8 |
+| 03 | 02 | 8min | 2 | 5 |
 
 ---
-*Last updated: 2026-05-24 after phase 3 plan 01 completion*
+*Last updated: 2026-05-24 after phase 3 plan 02 completion*

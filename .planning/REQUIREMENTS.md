@@ -37,8 +37,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **NEARBY-03**: 列表默认按地点从近到远排列
 - [x] **NEARBY-04**: 可按时间排序
 - [x] **NEARBY-05**: 可按球类筛选
-- [ ] **NEARBY-06**: 用户可以加入一个邀约
-- [ ] **NEARBY-07**: 用户可以退出已加入的邀约
+- [x] **NEARBY-06**: 用户可以加入一个邀约
+- [x] **NEARBY-07**: 用户可以退出已加入的邀约
 
 ### 参与人管理
 
@@ -93,8 +93,8 @@ Requirements for initial release. Each maps to roadmap phases.
 | NEARBY-03 | Phase 3 | Complete |
 | NEARBY-04 | Phase 3 | Complete |
 | NEARBY-05 | Phase 3 | Complete |
-| NEARBY-06 | Phase 3 | Pending |
-| NEARBY-07 | Phase 3 | Pending |
+| NEARBY-06 | Phase 3 | Complete |
+| NEARBY-07 | Phase 3 | Complete |
 | PART-01 | Phase 2 | Pending |
 | PART-02 | Phase 2 | Pending |
 | PART-03 | Phase 2 | Pending |
