@@ -12,7 +12,7 @@
 |---|-------|------|--------------|------------------|
 | 1 | 用户系统 | 完整的注册登录和个人信息管理 | AUTH-01~04, PROF-01~04 | 4 |
 | 2 | 邀约核心 | 发起邀约、管理邀约、查看参与人 | INVITE-01~06, PART-01~03 | 4 |
-| 3 | 附近约球与我的邀约 | 2/3 | In Progress|  |
+| 3 | 附近约球与我的邀约 | 3/3 | Complete   | 2026-05-24 |
 
 ---
 
@@ -71,7 +71,7 @@ Plans:
 
 **Goal:** 用户可以发现附近邀约、加入退出邀约、查看个人邀约历史
 **Mode:** mvp
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 **Success Criteria:**
 
 1. 浏览器定位获取用户位置，按距离排序展示附近邀约
@@ -91,7 +91,7 @@ Plans:
 
 **Wave 2** *(depends on 03-01 for InvitationCard component)*
 
-- [ ] 03-03-PLAN.md — 我的邀约垂直切片（后端 My API + 前端 Tab 切换页面 + 个人中心入口）
+- [x] 03-03-PLAN.md — 我的邀约垂直切片（后端 My API + 前端 Tab 切换页面 + 个人中心入口）
 
 ---
 

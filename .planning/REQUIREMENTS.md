@@ -48,8 +48,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### 我的邀约
 
-- [ ] **MY-01**: 用户可以查看自己发起的邀约列表
-- [ ] **MY-02**: 用户可以查看自己参与的邀约列表
+- [x] **MY-01**: 用户可以查看自己发起的邀约列表
+- [x] **MY-02**: 用户可以查看自己参与的邀约列表
 
 ## v2 Requirements
 
@@ -98,8 +98,8 @@ Requirements for initial release. Each maps to roadmap phases.
 | PART-01 | Phase 2 | Pending |
 | PART-02 | Phase 2 | Pending |
 | PART-03 | Phase 2 | Pending |
-| MY-01 | Phase 3 | Pending |
-| MY-02 | Phase 3 | Pending |
+| MY-01 | Phase 3 | Complete |
+| MY-02 | Phase 3 | Complete |
 
 **Coverage:**
 - v1 requirements: 26 total

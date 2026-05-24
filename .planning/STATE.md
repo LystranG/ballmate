@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-24T08:38:17.354Z"
+last_updated: "2026-05-24T08:41:58.721Z"
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 8
-  completed_plans: 7
-  percent: 50
+  completed_plans: 8
+  percent: 75
 ---
 
 # Project State: 掌上约球
@@ -25,7 +25,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-23)
 
 **Core value:** 让用户能快速找到附近想打球的人，凑齐人数开始运动
-**Current focus:** Phase 03 — nearby-and-my-invitations (Plan 02 complete)
+**Current focus:** Phase 04 — 报告撰写
 
 ## Progress
 
@@ -33,7 +33,7 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 |-------|------|--------|-------|
 | 1 | 用户系统 | ● Complete | 2/2 |
 | 2 | 邀约核心 | ● Complete | 3/3 |
-| 3 | 附近约球与我的邀约 | ◐ In Progress | 2/3 |
+| 3 | 附近约球与我的邀约 | ● Complete | 3/3 |
 | 4 | 报告撰写 | ○ Not Started | 0/0 |
 
 ## Decisions Log
@@ -56,6 +56,10 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 - 加入后满员自动流转 gathered，退出后若之前是 gathered 则恢复 waiting
 - 底部操作栏仅非创建者可见（创建者有独立的 action-section）
 
+- GET /invitations/my 在 /:id 之前注册，防止 Gin 将 "my" 当作 id 参数
+- joined 查询排除 creator_id = userID，避免自己创建的邀约出现在参与列表
+- 每个 Tab 独立维护 list/loading/finished/page 状态，切换时不重置对方数据
+
 ## Performance Metrics
 
 | Phase | Plan | Duration | Tasks | Files |
@@ -67,6 +71,7 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 | 02 | 03 | 3min | 1 | 3 |
 | 03 | 01 | 12min | 2 | 8 |
 | 03 | 02 | 8min | 2 | 5 |
+| 03 | 03 | 8min | 2 | 6 |
 
 ---
-*Last updated: 2026-05-24 after phase 3 plan 02 completion*
+*Last updated: 2026-05-24 after phase 3 plan 03 completion*
