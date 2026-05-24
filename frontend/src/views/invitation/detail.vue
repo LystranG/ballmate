@@ -6,7 +6,7 @@
       @click-left="router.back()"
     />
 
-    <div class="detail-content" v-if="invitation">
+    <div class="detail-content" v-if="invitation" :style="!isCreator ? 'padding-bottom: 80px' : ''">
       <!-- 状态徽章 -->
       <div class="status-section">
         <van-tag
@@ -72,6 +72,33 @@
     <div class="loading-wrapper" v-else>
       <van-loading size="24px" vertical>加载中...</van-loading>
     </div>
+
+    <!-- 底部固定操作栏（非创建者可见） -->
+    <div class="bottom-action" v-if="!isCreator && invitation">
+      <!-- 未加入：显示加入按钮 -->
+      <van-button
+        v-if="!invitation.has_joined"
+        type="primary"
+        block
+        round
+        :disabled="!canJoin"
+        @click="handleJoin"
+      >
+        {{ canJoin ? '加入邀约' : (invitation.status === 'waiting' ? '已满员' : '已' + (statusConfig[invitation.status]?.label || '结束')) }}
+      </van-button>
+
+      <!-- 已加入：显示退出按钮 -->
+      <van-button
+        v-else
+        type="warning"
+        block
+        round
+        :disabled="!canLeave"
+        @click="handleLeave"
+      >
+        退出邀约
+      </van-button>
+    </div>
   </div>
 </template>
 
@@ -84,7 +111,9 @@ import {
   getInvitation,
   terminateInvitation,
   deleteInvitation,
-  getParticipants
+  getParticipants,
+  joinInvitation,
+  leaveInvitation
 } from '@/api/invitation'
 
 const route = useRoute()
@@ -105,6 +134,19 @@ const statusConfig = {
 // 判断当前用户是否为发起人
 const isCreator = computed(() => {
   return userStore.userInfo?.id === invitation.value?.creator_id
+})
+
+// 是否可以加入：waiting 状态且未满员
+const canJoin = computed(() => {
+  if (!invitation.value) return false
+  return invitation.value.status === 'waiting' &&
+    invitation.value.participant_count < invitation.value.max_people
+})
+
+// 是否可以退出：waiting 状态（gathered 状态已满员，不允许退出）
+const canLeave = computed(() => {
+  if (!invitation.value) return false
+  return invitation.value.status === 'waiting'
 })
 
 // 格式化时间为 MM月DD日 HH:mm
@@ -176,6 +218,42 @@ function handleDelete() {
   }).catch(() => {})
 }
 
+// 加入邀约
+function handleJoin() {
+  showDialog({
+    title: '加入邀约',
+    message: '确定要加入这个邀约吗？',
+    showCancelButton: true
+  }).then(async () => {
+    try {
+      await joinInvitation(route.params.id)
+      showToast('已加入')
+      loadDetail()
+    } catch (error) {
+      const msg = error?.response?.data?.message || '操作失败'
+      showToast(msg)
+    }
+  }).catch(() => {})
+}
+
+// 退出邀约
+function handleLeave() {
+  showDialog({
+    title: '退出邀约',
+    message: '确定要退出这个邀约吗？',
+    showCancelButton: true
+  }).then(async () => {
+    try {
+      await leaveInvitation(route.params.id)
+      showToast('已退出')
+      loadDetail()
+    } catch (error) {
+      const msg = error?.response?.data?.message || '操作失败'
+      showToast(msg)
+    }
+  }).catch(() => {})
+}
+
 onMounted(() => {
   loadDetail()
 })
@@ -208,5 +286,17 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   height: 60vh;
+}
+
+/* 底部固定操作栏 */
+.bottom-action {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 16px;
+  background: #fff;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+  z-index: 100;
 }
 </style>

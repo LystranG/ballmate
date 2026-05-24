@@ -29,3 +29,13 @@ export function deleteInvitation(id) {
 export function getParticipants(id) {
   return request.get(`/invitations/${id}/participants`)
 }
+
+// 加入邀约
+export function joinInvitation(id) {
+  return request.post(`/invitations/${id}/join`)
+}
+
+// 退出邀约
+export function leaveInvitation(id) {
+  return request.delete(`/invitations/${id}/join`)
+}
