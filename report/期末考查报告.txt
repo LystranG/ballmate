@@ -115,3 +115,486 @@ graph LR
 
 [截图：系统用例图渲染效果]
 
+================================================================================
+
+第3章 设计与开发
+
+================================================================================
+
+3.1 数据库设计
+
+3.1.1 E-R 图
+
+请将以下mermaid代码渲染为图片后插入：
+
+```mermaid
+erDiagram
+    users ||--o{ invitations : "创建"
+    users ||--o{ participations : "参与"
+    invitations ||--o{ participations : "包含"
+
+    users {
+        uint id PK
+        varchar username "唯一索引"
+        varchar password "bcrypt加密"
+        varchar phone "11位手机号"
+        varchar nickname "昵称"
+        varchar avatar "头像路径"
+        varchar location "常住地"
+        varchar sports "球类兴趣"
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+
+    invitations {
+        uint id PK
+        uint creator_id FK "关联users.id"
+        varchar sport_type "球类名称"
+        datetime activity_time "活动时间"
+        varchar address "活动地点"
+        float64 latitude "纬度"
+        float64 longitude "经度"
+        int max_people "最大人数"
+        varchar status "waiting/gathered/terminated"
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+
+    participations {
+        uint id PK
+        uint invitation_id FK "关联invitations.id"
+        uint user_id FK "关联users.id"
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+```
+
+[截图：E-R图渲染效果]
+
+3.1.2 数据库表结构
+
+【User 表 (users)】
+
+字段          类型            注释          外键关系      备注
+----------    -----------     ----------    ----------    ----------------
+id            uint (PK)       主键          —             GORM自动生成
+username      varchar(50)     用户名        —             唯一索引，不可重复
+password      varchar(100)    密码          —             bcrypt加密存储
+phone         varchar(11)     手机号        —             11位数字
+nickname      varchar(50)     昵称          —             默认为用户名
+avatar        varchar(255)    头像路径      —             上传文件路径
+location      varchar(100)    常住地        —             —
+sports        varchar(255)    球类兴趣      —             逗号分隔存储
+created_at    datetime        创建时间      —             GORM自动管理
+updated_at    datetime        更新时间      —             GORM自动管理
+deleted_at    datetime        软删除时间    —             GORM软删除
+
+【Invitation 表 (invitations)】
+
+字段            类型            注释          外键关系        备注
+----------      -----------     ----------    ------------    ----------------
+id              uint (PK)       主键          —               GORM自动生成
+creator_id      uint            创建者ID      → users.id      非空，有索引
+sport_type      varchar(20)     球类名称      —               篮球/足球/羽毛球等
+activity_time   datetime        活动时间      —               非空
+address         varchar(255)    活动地点      —               文字地址
+latitude        float64         纬度          —               用于距离计算
+longitude       float64         经度          —               用于距离计算
+max_people      int             最大人数      —               非空
+status          varchar(20)     状态          —               waiting/gathered/terminated
+created_at      datetime        创建时间      —               GORM自动管理
+updated_at      datetime        更新时间      —               GORM自动管理
+deleted_at      datetime        软删除时间    —               GORM软删除
+
+【Participation 表 (participations)】
+
+字段            类型            注释          外键关系            备注
+----------      -----------     ----------    ----------------    ----------------
+id              uint (PK)       主键          —                   GORM自动生成
+invitation_id   uint            邀约ID        → invitations.id    联合唯一索引
+user_id         uint            用户ID        → users.id          联合唯一索引
+created_at      datetime        加入时间      —                   GORM自动管理
+updated_at      datetime        更新时间      —                   GORM自动管理
+deleted_at      datetime        软删除时间    —                   GORM软删除
+
+关键关系说明：
+- User 与 Invitation 为一对多关系（通过 creator_id）
+- User 与 Invitation 为多对多关系（通过 Participation 中间表）
+- 联合唯一索引 idx_inv_user (invitation_id, user_id) 防止重复参与
+
+--------------------------------------------------------------------------------
+
+3.2 前端开发
+
+3.2.1 系统架构图
+
+请将以下mermaid代码渲染为图片后插入：
+
+```mermaid
+flowchart TB
+    subgraph Browser["用户浏览器（移动端H5）"]
+        Vue3["Vue 3 (Composition API)"]
+        Vant4["Vant 4 组件库"]
+        VueRouter["Vue Router 5 (导航守卫)"]
+        Axios["Axios (请求/响应拦截器)"]
+        AMap["高德地图 JS API 2.0"]
+    end
+
+    subgraph Backend["Go 后端服务"]
+        Gin["Gin 1.12 Web框架"]
+        CORS["CORS 中间件"]
+        JWT["JWT 认证中间件"]
+        Handler["Handler 路由层"]
+        Service["Service 业务层"]
+        Model["Model 数据层 (GORM)"]
+    end
+
+    subgraph DB["数据存储"]
+        SQLite["SQLite 数据库"]
+        Tables["users / invitations / participations"]
+    end
+
+    Browser -->|"HTTP RESTful API\nAuthorization: Bearer JWT"| Backend
+    Handler --> Service --> Model --> SQLite
+```
+
+[截图：系统架构图渲染效果]
+
+3.2.2 前端核心代码
+
+【F1: Axios 封装与 JWT Token 自动注入】
+
+[用户填写：简述Axios封装的作用和JWT token自动注入机制，例如：
+  通过Axios请求拦截器自动从localStorage读取token并注入请求头，
+  响应拦截器统一处理401未授权错误，自动跳转登录页]
+
+```javascript
+// frontend/src/api/request.js — Axios封装+JWT注入+401自动跳转
+import axios from 'axios'
+import { showToast } from 'vant'
+import router from '@/router'
+
+const request = axios.create({
+  baseURL: '/api/v1',
+  timeout: 10000
+})
+
+// 请求拦截器：注入 token
+request.interceptors.request.use(config => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+// 响应拦截器：统一错误处理
+request.interceptors.response.use(
+  response => response.data,
+  error => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token')
+      router.push('/login')
+      showToast('登录已过期，请重新登录')
+    } else {
+      showToast(error.response?.data?.message || '网络错误')
+    }
+    return Promise.reject(error)
+  }
+)
+
+export default request
+```
+
+[截图：登录成功后浏览器Network面板显示Authorization请求头]
+
+【F2: 发起邀约表单核心逻辑】
+
+[用户填写：简述发起邀约表单的数据绑定和提交逻辑，例如：
+  使用reactive定义表单数据，支持球类选择、时间选择、地图选点定位，
+  提交时调用API创建邀约并跳转首页]
+
+```javascript
+// frontend/src/views/create/index.vue — 发起邀约表单script setup
+import { ref, reactive, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { showToast } from 'vant'
+import { createInvitation } from '@/api/invitation'
+import MapPicker from '@/components/MapPicker.vue'
+
+const router = useRouter()
+
+// 球类选项
+const sportTypes = ['篮球', '足球', '羽毛球', '乒乓球', '网球', '排球']
+// 人数选项
+const capacityOptions = [2, 4, 6, 8, 10]
+
+const form = reactive({
+  sportType: '',
+  activityTime: '',
+  longitude: null,
+  latitude: null,
+  address: '',
+  capacity: null
+})
+
+const submitting = ref(false)
+const showTimePicker = ref(false)
+const showMap = ref(false)
+```
+
+[截图：发起邀约页面]
+
+【F3: 路由导航守卫】
+
+[用户填写：简述路由守卫如何保护需要登录的页面，例如：
+  通过beforeEach全局守卫检查token，未登录用户访问需认证页面时自动跳转登录页]
+
+```javascript
+// frontend/src/router/index.js — 导航守卫
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('token')
+  if (to.meta.auth && !token) {
+    next('/login')
+  } else if (to.meta.guest && token) {
+    next('/')
+  } else {
+    next()
+  }
+})
+```
+
+【F4: 附近约球列表核心逻辑】
+
+[用户填写：简述附近约球列表的定位获取和数据加载流程，例如：
+  页面加载时获取浏览器定位，然后调用附近邀约API传入经纬度，
+  支持上拉加载更多、球类筛选和排序切换]
+
+```javascript
+// frontend/src/views/home/index.vue — 附近列表页核心逻辑
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { showToast } from 'vant'
+import { useGeolocation } from '@/composables/useGeolocation'
+import { getNearbyInvitations } from '@/api/invitation'
+
+const { getPosition } = useGeolocation()
+
+// 位置和列表状态
+const hasLocation = ref(false)
+const currentLat = ref(null)
+const currentLng = ref(null)
+const list = ref([])
+const loading = ref(false)
+const finished = ref(false)
+const page = ref(1)
+const PAGE_SIZE = 10
+
+// 上拉加载更多
+async function onLoad() {
+  const res = await getNearbyInvitations({
+    lat: currentLat.value,
+    lng: currentLng.value,
+    page: page.value,
+    page_size: PAGE_SIZE,
+    sort_by: sortBy.value,
+    sport_type: selectedSport.value
+  })
+  list.value.push(...(res.data.list || []))
+  page.value++
+  if (list.value.length >= res.data.total) {
+    finished.value = true
+  }
+}
+```
+
+[截图：附近约球列表页面]
+
+--------------------------------------------------------------------------------
+
+3.3 后端开发
+
+3.3.1 邀约状态流转图
+
+请将以下mermaid代码渲染为图片后插入：
+
+```mermaid
+stateDiagram-v2
+    [*] --> waiting : 创建邀约
+    waiting --> gathered : 参与人数达到上限
+    gathered --> waiting : 有人退出导致人数不足
+    waiting --> terminated : 发起人主动终止
+    terminated --> [*] : 发起人删除（软删除）
+    waiting --> expired : 活动时间已过（动态计算）
+
+    note right of waiting : 默认初始状态
+    note right of gathered : 人满自动流转
+    note right of expired : 不存储到数据库\n查询时动态计算
+```
+
+[截图：邀约状态流转图渲染效果]
+
+3.3.2 后端核心代码
+
+【B1: JWT Token 签发与解析】
+
+[用户填写：简述JWT token的签发流程和解析验证机制，例如：
+  使用HS256算法签发包含user_id和过期时间的token，
+  解析时验证签名和有效期，返回用户ID]
+
+```go
+// backend/utils/jwt.go — JWT token签发与解析
+package utils
+
+import (
+    "time"
+    "github.com/golang-jwt/jwt/v5"
+    "ballmate/config"
+)
+
+// GenerateToken 签发 JWT token
+func GenerateToken(userID uint) (string, error) {
+    claims := jwt.MapClaims{
+        "user_id": userID,
+        "exp":     time.Now().Add(config.TokenExpiry).Unix(),
+    }
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+    return token.SignedString([]byte(config.JWTSecret))
+}
+
+// ParseToken 解析 JWT token，返回 userID
+func ParseToken(tokenString string) (uint, error) {
+    token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+        return []byte(config.JWTSecret), nil
+    })
+    if err != nil {
+        return 0, err
+    }
+    claims, ok := token.Claims.(jwt.MapClaims)
+    if !ok || !token.Valid {
+        return 0, jwt.ErrTokenInvalidClaims
+    }
+    userID := uint(claims["user_id"].(float64))
+    return userID, nil
+}
+```
+
+【B2: JWT 认证中间件】
+
+[用户填写：简述认证中间件如何从请求头提取并验证token，例如：
+  从Authorization请求头提取Bearer token，调用ParseToken验证，
+  验证通过后将userID存入上下文供后续handler使用]
+
+```go
+// backend/middleware/auth.go — JWT认证中间件
+package middleware
+
+import (
+    "net/http"
+    "strings"
+    "github.com/gin-gonic/gin"
+    "ballmate/utils"
+)
+
+// AuthMiddleware JWT 认证中间件
+func AuthMiddleware() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        authHeader := c.GetHeader("Authorization")
+        if authHeader == "" {
+            c.JSON(http.StatusUnauthorized, gin.H{"code": -1, "message": "未登录"})
+            c.Abort()
+            return
+        }
+        tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+        if tokenString == authHeader {
+            c.JSON(http.StatusUnauthorized, gin.H{"code": -1, "message": "token格式错误"})
+            c.Abort()
+            return
+        }
+        userID, err := utils.ParseToken(tokenString)
+        if err != nil {
+            c.JSON(http.StatusUnauthorized, gin.H{"code": -1, "message": "token无效或已过期"})
+            c.Abort()
+            return
+        }
+        c.Set("userID", userID)
+        c.Next()
+    }
+}
+```
+
+[截图：Postman测试未携带token返回401]
+
+【B3: Haversine 距离计算】
+
+[用户填写：简述Haversine公式如何根据经纬度计算两点间距离，例如：
+  使用Haversine公式计算地球表面两点间的球面距离，
+  将经纬度转换为弧度后代入公式，返回公里数]
+
+```go
+// backend/service/invitation.go — Haversine距离计算
+const earthRadiusKm = 6371.0
+
+// haversineDistance 计算两点间球面距离（公里）
+func haversineDistance(lat1, lng1, lat2, lng2 float64) float64 {
+    dLat := (lat2 - lat1) * math.Pi / 180
+    dLng := (lng2 - lng1) * math.Pi / 180
+    lat1Rad := lat1 * math.Pi / 180
+    lat2Rad := lat2 * math.Pi / 180
+
+    a := math.Sin(dLat/2)*math.Sin(dLat/2) +
+        math.Cos(lat1Rad)*math.Cos(lat2Rad)*
+            math.Sin(dLng/2)*math.Sin(dLng/2)
+    c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+    return earthRadiusKm * c
+}
+```
+
+【B4: 加入邀约 + 事务保证 + 自动状态流转】
+
+[用户填写：简述加入邀约时如何用事务保证并发安全和自动状态流转，例如：
+  使用数据库事务保证容量检查和插入操作的原子性，防止并发超员，
+  加入后若人数达到上限则自动将邀约状态流转为gathered]
+
+```go
+// backend/service/invitation.go — 加入邀约+事务+状态流转
+// JoinInvitation 加入邀约
+// 校验：邀约存在、状态为waiting、未满员、未重复加入
+// 加入后若满员则自动将状态流转为gathered
+func JoinInvitation(invitationID, userID uint) error {
+    var inv model.Invitation
+    if err := DB.First(&inv, invitationID).Error; err != nil {
+        return errors.New("邀约不存在")
+    }
+    if computeStatus(inv) != "waiting" {
+        return errors.New("该邀约已无法加入")
+    }
+    // 事务保证容量检查和插入的原子性，防止并发超员
+    return DB.Transaction(func(tx *gorm.DB) error {
+        var count int64
+        tx.Model(&model.Participation{}).
+            Where("invitation_id = ? AND deleted_at IS NULL", invitationID).Count(&count)
+        if int(count) >= inv.MaxPeople {
+            return errors.New("邀约人数已满")
+        }
+        if err := tx.Create(&model.Participation{
+            InvitationID: invitationID, UserID: userID,
+        }).Error; err != nil {
+            return errors.New("您已加入该邀约")
+        }
+        var newCount int64
+        tx.Model(&model.Participation{}).
+            Where("invitation_id = ? AND deleted_at IS NULL", invitationID).Count(&newCount)
+        if int(newCount) >= inv.MaxPeople {
+            tx.Model(&inv).Update("status", "gathered")
+        }
+        return nil
+    })
+}
+```
+
+[截图：加入邀约后人数满员自动变为"已召集"状态]
+
