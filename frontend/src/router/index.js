@@ -30,6 +30,16 @@ const routes = [
     path: '/profile/password',
     component: () => import('@/views/profile/password.vue'),
     meta: { auth: true }
+  },
+  {
+    path: '/create',
+    component: () => import('@/views/create/index.vue'),
+    meta: { auth: true }
+  },
+  {
+    path: '/invitation/:id',
+    component: () => import('@/views/invitation/index.vue'),
+    meta: { auth: true }
   }
 ]
 
