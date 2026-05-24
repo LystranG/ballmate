@@ -20,7 +20,7 @@ export function deleteInvitation(id) {
   return request.delete(`/invitations/${id}`)
 }
 
-// 获取邀约参与者列表
+// 获取邀约参与人列表
 export function getParticipants(id) {
   return request.get(`/invitations/${id}/participants`)
 }
