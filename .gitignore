@@ -1,0 +1,26 @@
+# AI/工具目录
+.planning/
+.claude/
+.codex/
+
+# 文档文件
+*.docx
+
+# Go
+backend/ballmate
+backend/data/
+
+# 上传文件
+backend/uploads/
+
+# Node
+node_modules/
+frontend/node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
