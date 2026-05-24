@@ -39,6 +39,7 @@ Plans:
 ### Phase 2: 邀约核心
 **Goal:** 用户可以发起球类邀约，管理邀约状态，查看参与人信息
 **Mode:** mvp
+**Plans:** 3 plans
 **Success Criteria:**
 1. 用户可以创建邀约（选择球类、时间、地点、人数）并提交
 2. 邀约状态正确流转（等待中→已召集/已终止）
@@ -48,6 +49,11 @@ Plans:
 **Requirements:** INVITE-01, INVITE-02, INVITE-03, INVITE-04, INVITE-05, INVITE-06, PART-01, PART-02, PART-03
 
 **UI hint:** yes
+
+Plans:
+- [ ] 02-01-PLAN.md — 后端基础（数据模型 + service + handler + 路由）+ AMap 包安装确认
+- [ ] 02-02-PLAN.md — 发起邀约垂直切片（MapPicker 组件 + 发起邀约表单页）
+- [ ] 02-03-PLAN.md — 邀约详情垂直切片（详情展示 + 状态操作 + 参与人列表）
 
 ---
 
@@ -81,4 +87,4 @@ Plans:
 ---
 
 *Created: 2026-05-23*
-*Updated: 2026-05-23 — Phase 1 complete*
+*Updated: 2026-05-24 — Phase 2 planned (3 plans)*
