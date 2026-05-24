@@ -58,12 +58,12 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — 后端基础（数据模型 + service + handler + 路由）+ AMap 包安装确认
+- [x] 02-01-PLAN.md — 后端基础（数据模型 + service + handler + 路由）+ AMap 包安装确认 ✓ 2026-05-24
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 02-02-PLAN.md — 发起邀约垂直切片（MapPicker 组件 + 发起邀约表单页）
-- [ ] 02-03-PLAN.md — 邀约详情垂直切片（详情展示 + 状态操作 + 参与人列表）
+- [x] 02-02-PLAN.md — 发起邀约垂直切片（MapPicker 组件 + 发起邀约表单页） ✓ 2026-05-24
+- [x] 02-03-PLAN.md — 邀约详情垂直切片（详情展示 + 状态操作 + 参与人列表） ✓ 2026-05-24
 
 ---
 
