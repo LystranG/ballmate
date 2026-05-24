@@ -71,6 +71,7 @@ Plans:
 
 **Goal:** 用户可以发现附近邀约、加入退出邀约、查看个人邀约历史
 **Mode:** mvp
+**Plans:** 3 plans
 **Success Criteria:**
 
 1. 浏览器定位获取用户位置，按距离排序展示附近邀约
@@ -81,6 +82,16 @@ Plans:
 **Requirements:** NEARBY-01, NEARBY-02, NEARBY-03, NEARBY-04, NEARBY-05, NEARBY-06, NEARBY-07, MY-01, MY-02
 
 **UI hint:** yes
+
+Plans:
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — 附近邀约列表垂直切片（后端 Haversine 距离查询 + 前端定位/筛选/排序/无限滚动）
+- [ ] 03-02-PLAN.md — 加入/退出邀约垂直切片（后端 Join/Leave API + 前端详情页底部操作按钮）
+
+**Wave 2** *(depends on 03-01 for InvitationCard component)*
+
+- [ ] 03-03-PLAN.md — 我的邀约垂直切片（后端 My API + 前端 Tab 切换页面 + 个人中心入口）
 
 ---
 
@@ -101,4 +112,4 @@ Plans:
 ---
 
 *Created: 2026-05-23*
-*Updated: 2026-05-24 — Phase 2 planned (3 plans)*
+*Updated: 2026-05-24 — Phase 3 planned (3 plans, 2 waves)*
