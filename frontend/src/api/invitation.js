@@ -39,3 +39,8 @@ export function joinInvitation(id) {
 export function leaveInvitation(id) {
   return request.delete(`/invitations/${id}/join`)
 }
+
+// 获取我的邀约列表（type: created | joined）
+export function getMyInvitations(params) {
+  return request.get('/invitations/my', { params })
+}

@@ -19,6 +19,7 @@
 
     <!-- 菜单区域 -->
     <van-cell-group class="menu-group">
+      <van-cell title="我的邀约" is-link @click="router.push('/my-invitations')" />
       <van-cell title="编辑资料" is-link @click="router.push('/profile/edit')" />
       <van-cell title="修改密码" is-link @click="router.push('/profile/password')" />
       <van-cell
