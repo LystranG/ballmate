@@ -1,7 +1,7 @@
 ---
 phase: 2
 slug: invite-core
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-24
@@ -33,11 +33,11 @@ Declared values (multiples of 4, consistent with Phase 1):
 |-------|-------|-------|
 | xs | 4px | Icon gaps, inline padding |
 | sm | 8px | Compact element spacing, tag gaps |
-| md | 12px | Section margins between card groups |
-| lg | 16px | Default page padding, form section spacing |
-| xl | 24px | Section padding, button wrapper padding |
-| 2xl | 32px | Page top padding, major section breaks |
-| 3xl | 48px | Reserved (not used this phase) |
+| md | 16px | Default page padding, form section spacing, section margins between card groups |
+| lg | 24px | Section padding, button wrapper padding |
+| xl | 32px | Page top padding, major section breaks |
+| 2xl | 48px | Reserved (not used this phase) |
+| 3xl | 64px | Reserved (not used this phase) |
 
 Exceptions: Map container height fixed at 300px (not spacing-scale derived).
 
@@ -85,6 +85,8 @@ Status badge colors:
 
 ### Screen 1: 发起邀约表单页 (`/create`)
 
+**Focal point:** "发布邀约" submit button (primary CTA, bottom of form, `block round` styling)
+
 | Component | Vant Component | Props/Config |
 |-----------|---------------|--------------|
 | Page wrapper | — | `background: #f7f8fa; min-height: 100vh; padding-bottom: 50px` |
@@ -112,6 +114,8 @@ NavBar
 ```
 
 ### Screen 2: 邀约详情页 (`/invitation/:id`)
+
+**Focal point:** Status badge (immediate visual indicator of invitation state, top of content area)
 
 | Component | Vant Component | Props/Config |
 |-----------|---------------|--------------|
@@ -147,6 +151,8 @@ NavBar
 ```
 
 ### Screen 3: 我的邀约列表 (part of detail flow, accessed from profile or future Phase 3)
+
+**Focal point:** Invitation card list (scrollable content area with status badges providing visual differentiation)
 
 | Component | Vant Component | Props/Config |
 |-----------|---------------|--------------|
@@ -254,14 +260,14 @@ No third-party shadcn registries. No additional vetting required.
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-05-24
 
 ---
 
