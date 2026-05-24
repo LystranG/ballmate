@@ -143,10 +143,11 @@ const canJoin = computed(() => {
     invitation.value.participant_count < invitation.value.max_people
 })
 
-// 是否可以退出：waiting 状态（gathered 状态已满员，不允许退出）
+// 是否可以退出：waiting 或 gathered 状态均可退出
 const canLeave = computed(() => {
   if (!invitation.value) return false
-  return invitation.value.status === 'waiting'
+  const s = invitation.value.status
+  return s === 'waiting' || s === 'gathered'
 })
 
 // 格式化时间为 MM月DD日 HH:mm

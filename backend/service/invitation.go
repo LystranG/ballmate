@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"ballmate/model"
+
+	"gorm.io/gorm"
 )
 
 const earthRadiusKm = 6371.0
@@ -322,27 +324,27 @@ func JoinInvitation(invitationID, userID uint) error {
 	if computeStatus(inv) != "waiting" {
 		return errors.New("该邀约已无法加入")
 	}
-	// 校验未满员
-	var count int64
-	DB.Model(&model.Participation{}).Where("invitation_id = ? AND deleted_at IS NULL", invitationID).Count(&count)
-	if int(count) >= inv.MaxPeople {
-		return errors.New("邀约人数已满")
-	}
-	// 创建参与记录（联合唯一索引自动防重复）
-	if err := DB.Create(&model.Participation{InvitationID: invitationID, UserID: userID}).Error; err != nil {
-		return errors.New("您已加入该邀约")
-	}
-	// 加入后重新统计，满员则自动流转为 gathered
-	var newCount int64
-	DB.Model(&model.Participation{}).Where("invitation_id = ? AND deleted_at IS NULL", invitationID).Count(&newCount)
-	if int(newCount) >= inv.MaxPeople {
-		DB.Model(&inv).Update("status", "gathered")
-	}
-	return nil
+	// 事务保证容量检查和插入的原子性，防止并发超员
+	return DB.Transaction(func(tx *gorm.DB) error {
+		var count int64
+		tx.Model(&model.Participation{}).Where("invitation_id = ? AND deleted_at IS NULL", invitationID).Count(&count)
+		if int(count) >= inv.MaxPeople {
+			return errors.New("邀约人数已满")
+		}
+		if err := tx.Create(&model.Participation{InvitationID: invitationID, UserID: userID}).Error; err != nil {
+			return errors.New("您已加入该邀约")
+		}
+		var newCount int64
+		tx.Model(&model.Participation{}).Where("invitation_id = ? AND deleted_at IS NULL", invitationID).Count(&newCount)
+		if int(newCount) >= inv.MaxPeople {
+			tx.Model(&inv).Update("status", "gathered")
+		}
+		return nil
+	})
 }
 
 // LeaveInvitation 退出邀约
-// 校验：邀约存在、非创建者、状态为 waiting、已加入
+// 校验：邀约存在、非创建者、状态为 waiting 或 gathered、已加入
 // 退出后若邀约之前是 gathered 则恢复为 waiting
 func LeaveInvitation(invitationID, userID uint) error {
 	var inv model.Invitation
@@ -352,16 +354,15 @@ func LeaveInvitation(invitationID, userID uint) error {
 	if inv.CreatorID == userID {
 		return errors.New("创建者不能退出自己的邀约")
 	}
-	if computeStatus(inv) != "waiting" {
+	status := computeStatus(inv)
+	if status != "waiting" && status != "gathered" {
 		return errors.New("该邀约状态不允许退出")
 	}
-	// 软删除参与记录
 	result := DB.Where("invitation_id = ? AND user_id = ?", invitationID, userID).Delete(&model.Participation{})
 	if result.RowsAffected == 0 {
 		return errors.New("您未加入该邀约")
 	}
-	// 若邀约之前是 gathered（满员），退出后人数不足，恢复为 waiting
-	if inv.Status == "gathered" {
+	if status == "gathered" {
 		DB.Model(&inv).Update("status", "waiting")
 	}
 	return nil
