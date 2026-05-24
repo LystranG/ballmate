@@ -1,7 +1,7 @@
 # Roadmap: 掌上约球
 
 **Created:** 2026-05-23
-**Phases:** 3
+**Phases:** 4
 **Mode:** MVP (vertical slices)
 
 ---
@@ -13,6 +13,7 @@
 | 1 | 用户系统 | 完整的注册登录和个人信息管理 | AUTH-01~04, PROF-01~04 | 4 |
 | 2 | 邀约核心 | 发起邀约、管理邀约、查看参与人 | INVITE-01~06, PART-01~03 | 4 |
 | 3 | 附近约球与我的邀约 | 3/3 | Complete   | 2026-05-24 |
+| 4 | 报告撰写 | 完成期末考查报告 | (report deliverable) | 3 |
 
 ---
 
@@ -97,8 +98,9 @@ Plans:
 
 ## Phase 4: 报告撰写
 
-**Goal:** 完成期末考查报告
+**Goal:** 完成期末考查报告（txt格式），包含项目背景、需求分析、系统设计、核心代码说明、开源说明和总结展望
 **Mode:** mvp
+**Plans:** 1 plan
 **Success Criteria:**
 
 1. 报告包含项目背景、需求分析、系统设计、核心代码说明
@@ -109,7 +111,11 @@ Plans:
 
 **UI hint:** no
 
+Plans:
+
+- [ ] 04-01-PLAN.md — 生成完整期末考查报告txt文件（5章结构 + mermaid图 + 代码片段 + 表结构 + 占位符）
+
 ---
 
 *Created: 2026-05-23*
-*Updated: 2026-05-24 — Phase 3 planned (3 plans, 2 waves)*
+*Updated: 2026-05-24 — Phase 4 planned (1 plan, 1 wave)*
