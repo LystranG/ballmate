@@ -193,7 +193,7 @@ async function onSubmit() {
       longitude: form.longitude,
       latitude: form.latitude,
       address: form.address,
-      capacity: form.capacity
+      max_people: form.capacity
     }
     const res = await createInvitation(payload)
     showToast('发布成功')
