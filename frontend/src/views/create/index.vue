@@ -5,7 +5,7 @@
     <van-form @submit="onSubmit" class="form-content">
       <!-- 球类选择 -->
       <van-cell-group inset>
-        <van-field name="sportType" label="球类" :rules="[{ required: true, message: '请选择球类' }]">
+        <van-field name="sportType" label="球类" :rules="[{ validator: () => !!form.sportType, message: '请选择球类' }]">
           <template #input>
             <div class="tag-group">
               <van-tag
@@ -53,7 +53,7 @@
 
       <!-- 人数选择 -->
       <van-cell-group inset>
-        <van-field name="capacity" label="人数" :rules="[{ required: true, message: '请选择人数' }]">
+        <van-field name="capacity" label="人数" :rules="[{ validator: () => !!form.capacity, message: '请选择人数' }]">
           <template #input>
             <div class="tag-group">
               <van-tag
@@ -175,11 +175,13 @@ function onMapSelect(location) {
 
 // 确认地点选择
 function confirmLocation() {
-  if (tempLocation.value) {
-    form.longitude = tempLocation.value.longitude
-    form.latitude = tempLocation.value.latitude
-    form.address = tempLocation.value.address
+  if (!tempLocation.value) {
+    showToast('请先在地图上点击选择地点')
+    return
   }
+  form.longitude = tempLocation.value.longitude
+  form.latitude = tempLocation.value.latitude
+  form.address = tempLocation.value.address || '已选择位置'
   showMap.value = false
 }
 

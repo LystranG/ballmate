@@ -12,11 +12,13 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import AMapLoader from '@amap/amap-jsapi-loader'
 import { AMAP_KEY } from '@/config'
+import { useGeolocation } from '@/composables/useGeolocation'
 
 const emit = defineEmits(['select'])
 
 const mapContainer = ref(null)
 const address = ref('')
+const { getPosition } = useGeolocation()
 let map = null
 let marker = null
 let geocoder = null
@@ -32,15 +34,24 @@ onMounted(async () => {
 
     map = new AMap.Map(mapContainer.value, {
       zoom: 15,
-      center: [116.397428, 39.90923]
+      center: [104.06, 30.52] // 默认成都，定位成功后会移动
     })
 
     geocoder = new AMap.Geocoder()
+
+    // 获取当前位置并移动地图中心
+    getPosition().then(({ lat, lng }) => {
+      map.setCenter([lng, lat])
+    }).catch(() => {
+      // 定位失败保持默认中心
+    })
 
     // 点击地图选点
     map.on('click', (e) => {
       const { lng, lat } = e.lnglat
       placeMarker(AMap, lng, lat)
+      // 先立即发送坐标，确保即使逆地理编码失败也能拿到位置
+      emit('select', { longitude: lng, latitude: lat, address: '' })
       reverseGeocode(lng, lat)
     })
   } catch (err) {
@@ -68,6 +79,7 @@ function placeMarker(AMap, lng, lat) {
 
 // 逆地理编码获取地址
 function reverseGeocode(lng, lat) {
+  if (!geocoder) return
   geocoder.getAddress([lng, lat], (status, result) => {
     if (status === 'complete' && result.regeocode) {
       address.value = result.regeocode.formattedAddress

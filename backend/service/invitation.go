@@ -35,86 +35,15 @@ type NearbyInvitationResponse struct {
 
 // ListNearbyInvitations 查询附近邀约（Haversine 距离计算 + 排序 + 筛选 + 分页）
 // 排除当前用户自己创建的邀约（per NEARBY-02）
+// SQLite 默认不支持 sqrt/sin/cos 等数学函数，距离计算在 Go 层完成
 func ListNearbyInvitations(userID uint, lat, lng float64, sportType, sortBy string, page, pageSize int) ([]NearbyInvitationResponse, int64, error) {
-	// Haversine SQL 表达式（SQLite 不支持 RADIANS，手动 * pi/180）
-	// mattn/go-sqlite3 默认启用 SQLITE_ENABLE_MATH_FUNCTIONS，支持 sin/cos/asin/sqrt/pow
-	distanceExpr := `(6371 * 2 * asin(sqrt(
-		pow(sin((latitude - ?) * 3.141592653589793 / 180 / 2), 2) +
-		cos(? * 3.141592653589793 / 180) * cos(latitude * 3.141592653589793 / 180) *
-		pow(sin((longitude - ?) * 3.141592653589793 / 180 / 2), 2)
-	)))`
-
-	query := DB.Table("invitations").
-		Select("invitations.*, "+distanceExpr+" as distance", lat, lat, lng).
-		Where("invitations.deleted_at IS NULL").
-		Where("invitations.creator_id != ?", userID)
-
-	// 球类筛选
-	if sportType != "" {
-		query = query.Where("invitations.sport_type = ?", sportType)
-	}
-
-	// 总数统计（不含分页）
-	countQuery := DB.Table("invitations").
-		Where("deleted_at IS NULL").
-		Where("creator_id != ?", userID)
-	if sportType != "" {
-		countQuery = countQuery.Where("sport_type = ?", sportType)
-	}
-	var total int64
-	countQuery.Count(&total)
-
-	// 排序
-	if sortBy == "time" {
-		query = query.Order("activity_time ASC")
-	} else {
-		query = query.Order("distance ASC")
-	}
-
-	// 分页
-	offset := (page - 1) * pageSize
-	query = query.Offset(offset).Limit(pageSize)
-
-	var results []struct {
-		model.Invitation
-		Distance float64
-	}
-	if err := query.Scan(&results).Error; err != nil {
-		// SQL 数学函数不可用时回退到 Go 层计算
-		return listNearbyFallback(userID, lat, lng, sportType, sortBy, page, pageSize)
-	}
-
-	// 检查是否因数学函数不可用导致 distance 全为 0（非正常情况）
-	// 若所有 distance 为 0 且有多条记录，说明 SQL 计算失败，回退到 Go 层
-	if len(results) > 1 {
-		allZero := true
-		for _, r := range results {
-			if r.Distance != 0 {
-				allZero = false
-				break
-			}
-		}
-		if allZero {
-			return listNearbyFallback(userID, lat, lng, sportType, sortBy, page, pageSize)
-		}
-	}
-
-	responses := make([]NearbyInvitationResponse, len(results))
-	for i, r := range results {
-		base := buildResponse(r.Invitation)
-		responses[i] = NearbyInvitationResponse{
-			InvitationResponse: *base,
-			Distance:           r.Distance,
-		}
-	}
-	return responses, total, nil
+	return listNearbyFallback(userID, lat, lng, sportType, sortBy, page, pageSize)
 }
 
 // listNearbyFallback 当 SQLite 数学函数不可用时，Go 层计算距离并排序分页
 func listNearbyFallback(userID uint, lat, lng float64, sportType, sortBy string, page, pageSize int) ([]NearbyInvitationResponse, int64, error) {
 	query := DB.Table("invitations").
-		Where("deleted_at IS NULL").
-		Where("creator_id != ?", userID)
+		Where("deleted_at IS NULL")
 	if sportType != "" {
 		query = query.Where("sport_type = ?", sportType)
 	}
