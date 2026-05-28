@@ -76,6 +76,9 @@
         <van-button type="primary" block round native-type="submit" :loading="submitting">
           发布邀约
         </van-button>
+        <van-button plain block round style="margin-top: 12px" @click="router.push('/')">
+          返回主页
+        </van-button>
       </div>
     </van-form>
 

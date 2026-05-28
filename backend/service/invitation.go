@@ -61,16 +61,18 @@ func listNearbyFallback(userID uint, lat, lng float64, sportType, sortBy string,
 		items[i] = withDist{inv: inv, distance: haversineDistance(lat, lng, inv.Latitude, inv.Longitude)}
 	}
 
-	// 排序
-	if sortBy == "time" {
-		sort.Slice(items, func(i, j int) bool {
+	// 排序：过期邀约始终排在最后
+	sort.SliceStable(items, func(i, j int) bool {
+		iExpired := items[i].inv.ActivityTime.Before(time.Now())
+		jExpired := items[j].inv.ActivityTime.Before(time.Now())
+		if iExpired != jExpired {
+			return !iExpired
+		}
+		if sortBy == "time" {
 			return items[i].inv.ActivityTime.Before(items[j].inv.ActivityTime)
-		})
-	} else {
-		sort.Slice(items, func(i, j int) bool {
-			return items[i].distance < items[j].distance
-		})
-	}
+		}
+		return items[i].distance < items[j].distance
+	})
 
 	total := int64(len(items))
 
